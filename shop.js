@@ -121,13 +121,21 @@
       '<p class="shop-hint" id="cHint"></p>' +
       '<button type="button" class="pill solid" id="cBuy">' + T("Prenota e paga", "Book and pay") + "</button></div>";
     var out = wrap.querySelector("#cHours"), tot = wrap.querySelector("#cTotal");
+    function linkFor(h) {
+      var exact = Object.keys(CONSULT_LINKS).some(function (k) { return CONSULT_LINKS[k]; });
+      if (!exact) return CONSULT_ADJUSTABLE_LINK;               // only the adjustable link exists
+      return CONSULT_LINKS[h] || (h === 1 ? CONSULT_ADJUSTABLE_LINK : "");  // else: no payment link for this length
+    }
     function paint() {
       out.textContent = hours + " " + (hours === 1 ? T("ora", "hour") : T("ore", "hours"));
       tot.textContent = eur(hours * CONSULT_RATE);
-      var hint = wrap.querySelector("#cHint");
-      hint.textContent = !CONSULT_LINKS[hours] && CONSULT_ADJUSTABLE_LINK
-        ? T("Nella pagina di pagamento imposta la quantità: " + hours + (hours === 1 ? " ora." : " ore."), "On the payment page set the quantity to " + hours + (hours === 1 ? " hour." : " hours."))
-        : "";
+      var hint = wrap.querySelector("#cHint"), buy = wrap.querySelector("#cBuy");
+      var exact = Object.keys(CONSULT_LINKS).some(function (k) { return CONSULT_LINKS[k]; });
+      var link = linkFor(hours);
+      buy.textContent = link ? T("Prenota e paga", "Book and pay") : T("Richiedi su WhatsApp", "Request on WhatsApp");
+      if (!link) hint.textContent = T("Per questa durata ti inviamo il link di pagamento su WhatsApp.", "For this length we send you the payment link on WhatsApp.");
+      else if (!exact) hint.textContent = T("Nella pagina di pagamento imposta la quantità: " + hours + (hours === 1 ? " ora." : " ore."), "On the payment page set the quantity to " + hours + (hours === 1 ? " hour." : " hours."));
+      else hint.textContent = "";
     }
     wrap.querySelectorAll(".stepper button").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -136,8 +144,7 @@
       });
     });
     wrap.querySelector("#cBuy").addEventListener("click", function () {
-      var link = CONSULT_LINKS[hours] || CONSULT_ADJUSTABLE_LINK;
-      checkout(link, T("Consulenza", "Consultation") + " " + hours + " " + (hours === 1 ? T("ora", "hour") : T("ore", "hours")) + " — " + eur(hours * CONSULT_RATE));
+      checkout(linkFor(hours), T("Consulenza", "Consultation") + " " + hours + " " + (hours === 1 ? T("ora", "hour") : T("ore", "hours")) + " — " + eur(hours * CONSULT_RATE));
     });
     paint();
     return wrap;
